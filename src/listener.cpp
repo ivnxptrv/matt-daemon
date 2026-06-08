@@ -1,4 +1,7 @@
 #include "listener.hpp"
+#include "client.hpp"
+#include "eventloop.hpp"
+#include <iostream>
 #include <netinet/in.h>
 #include <stdexcept>
 #include <sys/epoll.h>
@@ -37,8 +40,15 @@ Listener::~Listener() {
     }
 }
 
-void Listener::handle(int event) {
-    if (event == EPOLLIN) {
-        ::accept(this->fd_, nullptr, nullptr);
+void Listener::handle(Eventloop &el, int event) {
+    if (event & EPOLLIN) {
+        int fd = ::accept(this->fd_, nullptr, nullptr);
+        if (this->numActiveClients_ < 3) {
+            el.addEventSource(new Client(fd));
+            this->numActiveClients_++;
+            return;
+        }
+        std::cout << "3 clients limit" << std::endl;
+        ::close(fd);
     }
 }

@@ -2,6 +2,9 @@
 #include "stream.hpp"
 
 class Listener : public Stream {
+  private:
+    int numActiveClients_ = 0;
+
   public:
     Listener() = delete;
     Listener(const Listener &) = delete;
@@ -9,5 +12,5 @@ class Listener : public Stream {
 
     Listener(int port);
     ~Listener();
-    void handle(int event);
+    void handle(Eventloop &el, int event);
 };

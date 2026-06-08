@@ -6,9 +6,8 @@
 auto main() -> int {
 
     Eventloop el;
-    Listener l(4242);
 
-    el.addEventSource(l);
+    el.addEventSource(new Listener(4242));
     el.run();
     return 0;
 }

@@ -7,15 +7,21 @@ Eventloop::Eventloop() { this->epoll_fd_ = epoll_create1(0); }
 
 Eventloop::~Eventloop() {
     // TOOD: close epoll fd
+    for (Stream *s : srcs_) {
+        delete s; // Clean up memory for each pointer
+    }
+    srcs_.clear();
 }
 
-void Eventloop::addEventSource(const Stream &s) const {
+void Eventloop::addEventSource(Stream *s) {
 
     struct epoll_event ev;
 
-    ev.events = EPOLLIN;
-    ev.data.ptr = (void *)&s;
-    epoll_ctl(this->epoll_fd_, EPOLL_CTL_ADD, s.getFd(), &ev);
+    this->srcs_.push_back(s);
+
+    ev.events = EPOLLIN | EPOLLRDHUP;
+    ev.data.ptr = s;
+    epoll_ctl(this->epoll_fd_, EPOLL_CTL_ADD, s->getFd(), &ev);
 }
 
 void Eventloop::run() {
@@ -26,7 +32,9 @@ void Eventloop::run() {
 
         int nfds = epoll_wait(this->epoll_fd_, events, MAX_EVENTS, -1);
         (void)nfds;
-        ((Stream *)events[0].data.ptr)->handle(events[0].events);
-        std::cout << "here" << std::endl;
+        ((Stream *)events[0].data.ptr)->handle(*this, events[0].events);
+        std::cout << "here: " << this->getSrcsSize() << std::endl;
     }
 }
+
+int Eventloop::getSrcsSize() { return this->srcs_.size(); }
