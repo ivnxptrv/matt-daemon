@@ -1,5 +1,6 @@
 #include "eventloop.hpp"
 #include "stream.hpp"
+#include <algorithm>
 #include <iostream>
 #include <sys/epoll.h>
 
@@ -24,16 +25,26 @@ void Eventloop::addEventSource(Stream *s) {
     epoll_ctl(this->epoll_fd_, EPOLL_CTL_ADD, s->getFd(), &ev);
 }
 
+void Eventloop::deleteEventSource(Stream *s) {
+    auto it = std::find(this->srcs_.begin(), this->srcs_.end(), s);
+
+    if (it != this->srcs_.end()) {
+        epoll_ctl(this->epoll_fd_, EPOLL_CTL_DEL, s->getFd(), nullptr);
+        this->srcs_.erase(it);
+        delete s;
+    }
+}
+
 void Eventloop::run() {
 
     struct epoll_event events[MAX_EVENTS];
 
     while (true) {
-
         int nfds = epoll_wait(this->epoll_fd_, events, MAX_EVENTS, -1);
-        (void)nfds;
-        ((Stream *)events[0].data.ptr)->handle(*this, events[0].events);
-        std::cout << "here: " << this->getSrcsSize() << std::endl;
+        for (int i = 0; i < nfds; i++) {
+            ((Stream *)events[0].data.ptr)->handle(*this, events[0].events);
+            std::cout << "here: " << this->getSrcsSize() << std::endl;
+        }
     }
 }
 

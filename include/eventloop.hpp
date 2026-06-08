@@ -12,6 +12,7 @@ class Eventloop {
     ~Eventloop();
     void run();
     void addEventSource(Stream *s);
+    void deleteEventSource(Stream *s);
     int getSrcsSize();
 };
 
