@@ -15,10 +15,22 @@ void Client::handle(Eventloop &el, int event) {
         return;
     }
     if (event & EPOLLIN) {
+        // move chars from socket to buffer
         char buffer[1024];
-        ssize_t bytes_read = ::recv(this->fd_, buffer, sizeof(buffer) - 1, 0);
-        buffer[bytes_read] = '\0';
-        std::cout << "bytes: " << bytes_read << buffer << std::endl;
-        // TODO: handle long chunks?
+        ssize_t bytes_read = ::recv(this->fd_, buffer, sizeof(buffer), 0);
+
+        // add to clients buffer, to be preserved
+        this->buf_.append(buffer, bytes_read);
+
+        // search for a done new-line terminated line in the buffer
+        size_t pos;
+        while ((pos = this->buf_.find('\n')) != std::string::npos) {
+            std::string line = this->buf_.substr(0, pos);
+
+            // delete found line form the client's buffer
+            this->buf_.erase(0, pos + 1);
+
+            std::cout << "line: " << line << std::endl;
+        }
     }
 }

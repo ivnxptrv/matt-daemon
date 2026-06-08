@@ -8,6 +8,7 @@ class Eventloop {
     int epoll_fd_;
     std::vector<Stream *> srcs_;
     int numActiveClients_ = 0;
+    bool shutdown_flag = false;
 
   public:
     Eventloop();
