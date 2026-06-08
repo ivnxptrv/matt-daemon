@@ -43,9 +43,8 @@ Listener::~Listener() {
 void Listener::handle(Eventloop &el, int event) {
     if (event & EPOLLIN) {
         int fd = ::accept(this->fd_, nullptr, nullptr);
-        if (this->numActiveClients_ < 3) {
+        if (el.getNumActiveClients() < 3) {
             el.addEventSource(new Client(fd));
-            this->numActiveClients_++;
             return;
         }
         std::cout << "3 clients limit" << std::endl;

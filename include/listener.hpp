@@ -2,8 +2,6 @@
 #include "stream.hpp"
 
 class Listener : public Stream {
-  private:
-    int numActiveClients_ = 0;
 
   public:
     Listener() = delete;

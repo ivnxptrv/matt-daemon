@@ -16,8 +16,8 @@ void Client::handle(Eventloop &el, int event) {
     }
     if (event & EPOLLIN) {
         char buffer[1024];
-        buffer[1023] = '\0';
         ssize_t bytes_read = ::recv(this->fd_, buffer, sizeof(buffer) - 1, 0);
+        buffer[bytes_read] = '\0';
         std::cout << "bytes: " << bytes_read << buffer << std::endl;
         // TODO: handle long chunks?
     }

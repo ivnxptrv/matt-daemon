@@ -1,2 +1,2 @@
 obj/eventloop.o: src/eventloop.cpp include/eventloop.hpp \
- include/stream.hpp
+ include/client.hpp include/stream.hpp

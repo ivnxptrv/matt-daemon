@@ -1,17 +1,26 @@
 #include "eventloop.hpp"
+#include "client.hpp"
 #include "stream.hpp"
 #include <algorithm>
 #include <iostream>
 #include <sys/epoll.h>
+#include <unistd.h>
 
 Eventloop::Eventloop() { this->epoll_fd_ = epoll_create1(0); }
 
 Eventloop::~Eventloop() {
-    // TOOD: close epoll fd
     for (Stream *s : srcs_) {
-        delete s; // Clean up memory for each pointer
+        this->deleteEventSource(s);
+    }
+    if (this->epoll_fd_ > 0) {
+        ::close(this->epoll_fd_);
     }
     srcs_.clear();
+}
+
+void Eventloop::addEventSource(Client *s) {
+    this->numActiveClients_++;
+    this->addEventSource((Stream *)s);
 }
 
 void Eventloop::addEventSource(Stream *s) {
@@ -23,6 +32,11 @@ void Eventloop::addEventSource(Stream *s) {
     ev.events = EPOLLIN | EPOLLRDHUP;
     ev.data.ptr = s;
     epoll_ctl(this->epoll_fd_, EPOLL_CTL_ADD, s->getFd(), &ev);
+}
+
+void Eventloop::deleteEventSource(Client *s) {
+    this->numActiveClients_--;
+    this->deleteEventSource((Stream *)s);
 }
 
 void Eventloop::deleteEventSource(Stream *s) {
@@ -49,3 +63,4 @@ void Eventloop::run() {
 }
 
 int Eventloop::getSrcsSize() { return this->srcs_.size(); }
+int Eventloop::getNumActiveClients() { return this->numActiveClients_; }
