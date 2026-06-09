@@ -2,7 +2,8 @@
 .idea
 *.log
 tmp/
-dep
-obj
+dep*
+obj*
 *.o
 Matt_daemon
+test_runner

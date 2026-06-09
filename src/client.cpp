@@ -10,9 +10,7 @@ Client::Client(int fd, Tintin_reporter &reporter)
 Client::~Client() {}
 
 void Client::handle(Eventloop &el, int event) {
-    // EPOLLRDHUP: Peer closed the connection gracefully (stopped sending data).
-    // EPOLLHUP: The connection was broken or hung up unexpectedly.
-    // EPOLLERR: A hard error occurred on the socket; it is now unusable.
+    // EPOLLRDHUP: peer closed gracefully. EPOLLHUP: hang up. EPOLLERR: hard error.
     if (event & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
         el.deleteEventSource(this);
         return;
@@ -28,16 +26,8 @@ void Client::handle(Eventloop &el, int event) {
         return;
     }
 
-    this->buf_.append(chunk, n);
-
-    // TCP is a byte stream — extract every complete line in the buffer.
-    size_t pos;
-    while ((pos = this->buf_.find('\n')) != std::string::npos) {
-        std::string line = this->buf_.substr(0, pos);
-        this->buf_.erase(0, pos + 1);
-        if (!line.empty() && line.back() == '\r') // telnet sends CRLF
-            line.pop_back();
-
+    // Framing is delegated to LineFramer (pure logic, unit-tested separately).
+    for (const auto &line : framer_.feed(chunk, n)) {
         if (line == "quit") {
             reporter_.log(Tintin_reporter::Level::INFO,
                           "Matt_daemon: Request quit.");

@@ -1,6 +1,6 @@
 #pragma once
+#include "line_framer.hpp"
 #include "stream.hpp"
-#include <string>
 
 class Tintin_reporter;
 
@@ -15,6 +15,6 @@ class Client : public Stream {
     void handle(Eventloop &el, int event);
 
   private:
-    std::string buf_;
+    LineFramer framer_;
     Tintin_reporter &reporter_;
 };
