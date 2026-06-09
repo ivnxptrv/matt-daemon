@@ -1,11 +1,7 @@
 #include "stream.hpp"
-#include <unistd.h>
 
-Stream::Stream() {}
-Stream::~Stream() {
-    if (this->fd_ > 0) {
-        ::close(this->fd_);
-    }
-}
+Stream::Stream() : Fd() {}
+Stream::Stream(int fd) : Fd(fd) {}
 
-int Stream::getFd() const { return this->fd_; }
+// Empty: Fd owns the descriptor and closes it.
+Stream::~Stream() {}

@@ -1,14 +1,14 @@
 #pragma once
+#include "fd.hpp"
 
 class Eventloop;
 
-class Stream {
-  protected:
-    int fd_ = -1;
-
+class Stream : public Fd {
   public:
     Stream();
+    explicit Stream(int fd);
     virtual ~Stream();
-    int getFd() const;
+    Stream(const Stream &) = delete;
+    Stream &operator=(const Stream &) = delete;
     virtual void handle(Eventloop &el, int event) = 0;
 };

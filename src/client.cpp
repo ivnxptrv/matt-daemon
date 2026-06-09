@@ -1,36 +1,52 @@
 #include "client.hpp"
 #include "eventloop.hpp"
-#include <iostream>
+#include "tintin_reporter.hpp"
 #include <sys/epoll.h>
 #include <sys/socket.h>
 
-Client::Client(int fd) { this->fd_ = fd; }
+Client::Client(int fd, Tintin_reporter &reporter)
+    : Stream(fd), reporter_(reporter) {}
 
-Client ::~Client() {}
+Client::~Client() {}
 
 void Client::handle(Eventloop &el, int event) {
-    if (event & EPOLLRDHUP) {
-        std::cout << "bye" << std::endl;
+    // EPOLLRDHUP: Peer closed the connection gracefully (stopped sending data).
+    // EPOLLHUP: The connection was broken or hung up unexpectedly.
+    // EPOLLERR: A hard error occurred on the socket; it is now unusable.
+    if (event & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
         el.deleteEventSource(this);
         return;
     }
-    if (event & EPOLLIN) {
-        // move chars from socket to buffer
-        char buffer[1024];
-        ssize_t bytes_read = ::recv(this->fd_, buffer, sizeof(buffer), 0);
+    if (!(event & EPOLLIN))
+        return;
 
-        // add to clients buffer, to be preserved
-        this->buf_.append(buffer, bytes_read);
+    char chunk[4096];
+    ssize_t n = ::recv(this->fd_, chunk, sizeof(chunk), 0);
+    if (n <= 0) {
+        // 0 = peer closed; <0 = error. Either way, drop the client.
+        el.deleteEventSource(this);
+        return;
+    }
 
-        // search for a done new-line terminated line in the buffer
-        size_t pos;
-        while ((pos = this->buf_.find('\n')) != std::string::npos) {
-            std::string line = this->buf_.substr(0, pos);
+    this->buf_.append(chunk, n);
 
-            // delete found line form the client's buffer
-            this->buf_.erase(0, pos + 1);
+    // TCP is a byte stream — extract every complete line in the buffer.
+    size_t pos;
+    while ((pos = this->buf_.find('\n')) != std::string::npos) {
+        std::string line = this->buf_.substr(0, pos);
+        this->buf_.erase(0, pos + 1);
+        if (!line.empty() && line.back() == '\r') // telnet sends CRLF
+            line.pop_back();
 
-            std::cout << "line: " << line << std::endl;
+        if (line == "quit") {
+            reporter_.log(Tintin_reporter::Level::INFO,
+                          "Matt_daemon: Request quit.");
+            reporter_.log(Tintin_reporter::Level::INFO,
+                          "Matt_daemon: Quitting.");
+            el.shutdown();
+            return;
         }
+        reporter_.log(Tintin_reporter::Level::LOG,
+                      "Matt_daemon: User input: " + line);
     }
 }

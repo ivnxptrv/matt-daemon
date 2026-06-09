@@ -18,9 +18,6 @@ SRC := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC))
 DEP := $(patsubst $(SRC_DIR)/%.cpp, $(DEP_DIR)/%.d, $(SRC))
 
-# Ensure directories exist before compiling
-$(shell mkdir -p $(OBJ_DIR) $(DEP_DIR))
-
 # Default Target
 all: $(NAME)
 
@@ -28,9 +25,12 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CXX) $(OBJ) -o $@
 
-# Compiling objects
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+# Compiling objects (order-only deps create the dirs cleanly even after fclean)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR) $(DEP_DIR)
 	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d $(INCLUDE) -c $< -o $@
+
+$(OBJ_DIR) $(DEP_DIR):
+	mkdir -p $@
 
 # Cleanup
 clean:
