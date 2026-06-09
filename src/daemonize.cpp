@@ -1,10 +1,11 @@
 #include "daemonize.hpp"
+#include "lockfile.hpp"
 #include <fcntl.h>
 #include <stdexcept>
 #include <sys/stat.h>
 #include <unistd.h>
 
-void daemonize() {
+void daemonize(LockFile &lock) {
     pid_t pid = ::fork();
     if (pid < 0)
         throw std::runtime_error("fork 1 failed");
@@ -41,4 +42,5 @@ void daemonize() {
         if (dn > 2)
             ::close(dn);
     }
+    lock.writePid();
 }

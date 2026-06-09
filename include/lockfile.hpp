@@ -6,7 +6,7 @@ class LockFile {
     LockFile() = delete;
     LockFile(const LockFile &) = delete;
     LockFile &operator=(const LockFile &) = delete;
-
+    void writePid();
     explicit LockFile(const std::string &path);
     ~LockFile();
 

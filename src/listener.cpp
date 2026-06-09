@@ -50,6 +50,8 @@ void Listener::handle(Eventloop &el, int event) {
     // 3-client cap: close immediately if at limit so the kernel sends FIN.
     if (el.getNumActiveClients() >= 3) {
         ::close(fd);
+        reporter_.log(Tintin_reporter::Level::INFO,
+                      "Matt_daemon: Maximum number of clients reached.");
         return;
     }
     el.addEventSource(new Client(fd, reporter_));

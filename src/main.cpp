@@ -39,11 +39,11 @@ int main() {
 
         // After this returns we're the grandchild — no tty, no stdio.
         // File descriptors (lock, log, listening socket, epoll) are inherited.
-        daemonize();
+        daemonize(lock);
 
-        reporter.log(Tintin_reporter::Level::INFO,
-                     "Matt_daemon: started. PID: " +
-                         std::to_string(::getpid()) + ".");
+        reporter.log(
+            Tintin_reporter::Level::INFO,
+            "Matt_daemon: started. PID: " + std::to_string(::getpid()) + ".");
 
         // Set up signalfd in the final process so sigprocmask applies here,
         // not in the parents that have already exited.

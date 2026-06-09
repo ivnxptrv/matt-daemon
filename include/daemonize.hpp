@@ -1,3 +1,5 @@
 #pragma once
 
-void daemonize();
+#include "lockfile.hpp"
+
+void daemonize(LockFile &lock);

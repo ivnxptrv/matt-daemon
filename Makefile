@@ -41,6 +41,9 @@ fclean: clean
 
 re: fclean all
 
+kill: 
+	sudo kill -TERM $(pgrep Matt_daemon)
+
 # Include dependencies
 -include $(DEP)
 

@@ -21,8 +21,25 @@ LockFile::LockFile(const std::string &path) : fd_(-1), path_(path) {
     }
 }
 
+void LockFile::writePid() {
+    if (::ftruncate(fd_, 0) < 0) {
+        ::close(fd_);
+        fd_ = -1;
+        throw std::runtime_error("lockfile: ftruncate failed");
+    }
+
+    std::string pid = std::to_string(::getpid());
+    if (::write(fd_, pid.c_str(), pid.size()) !=
+        static_cast<ssize_t>(pid.size())) {
+        ::close(fd_);
+        fd_ = -1;
+        throw std::runtime_error("lockfile: write pid failed");
+    }
+}
+
 LockFile::~LockFile() {
-    if (fd_ < 0) return;
+    if (fd_ < 0)
+        return;
     ::flock(fd_, LOCK_UN);
     ::close(fd_);
     ::unlink(path_.c_str());
