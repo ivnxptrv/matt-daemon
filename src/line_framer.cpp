@@ -12,5 +12,5 @@ std::vector<std::string> LineFramer::feed(const char *data, std::size_t len) {
             line.pop_back();
         out.push_back(std::move(line));
     }
-    return out;
+    return out; // return empty 0 vector if no \n found
 }
